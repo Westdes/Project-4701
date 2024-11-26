@@ -113,9 +113,14 @@ def move():
     ##
     start_en = True
     ## TODO 2: set block end positions
-    place_coord = {1:(0.18, 0.0, -0.09),
-                   2:(, , ),
-                   3:(, , )}
+    '''
+    place_coord = {1:(0.18, 0.0, -0.09),    # test
+                   2:(0.0, 0.0, -0.09),
+                   3:(0.0, -0.2, -0.09)}
+    '''
+    place_coord = {1:(0.18, 0.0, -0.09),    # vertical
+                   2:(0.18, 0.0, -0.06),
+                   3:(0.18, 0.0, -0.03)}
     ##
     while __isRunning:
         if steadier and object_center_x > 0 and object_center_y > 0: 
@@ -201,7 +206,10 @@ def move():
                 rospy.sleep(1.8)
                 ## TODO 4: Move the robotic arm to where block is placed.
                 ## using ik.setPitchRanges(), place_coord, stack_num
-                target = 
+                bus_servo_control.set_servos(joints_pub, 500, ((2, 800),))
+                rospy.sleep(0.5)
+                (x,y,z) = place_coord[stack_num]
+                target = ik.setPitchRanges((x,y,z), -180, -180, 0)
                 ##
                 if target:
                     servo_data = target[1]
