@@ -163,6 +163,9 @@ def run(msg):
                 # set the point position in the y direction
                 # update y pid
                 # update the chassis y
+                arm_y_pid.SetPoint = Arm_Y
+                arm_y_pid.update(arm_y)
+                y_velocity = arm_y_pid.output
 
                 # TODO:move the chassis
                 set_translation.publish(x_velocity, y_velocity)
