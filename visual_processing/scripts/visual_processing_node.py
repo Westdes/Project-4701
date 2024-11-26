@@ -84,7 +84,9 @@ def apriltag_Detect(img):
 
             object_angle = int(math.degrees(math.atan2(
                 corners[0][1] - corners[1][1], corners[0][0] - corners[1][0])))  # rotation angle
-            if id_smallest == 'None' or tag_id <= id_smallest:
+            if id_smallest == 'None' or tag_id <= id_smallest:  # normal (123)
+            # if id_smallest == 'None' or tag_id >= id_smallest:  # reverse (321)
+            # if (id_smallest == 'None' or tag_id <= id_smallest or tag_id == 2) and id_smallest != 2:    # 2 first (213)
                 id_smallest = tag_id
                 msg.center_x = object_center_x
                 msg.center_y = object_center_y
