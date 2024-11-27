@@ -85,8 +85,8 @@ def apriltag_Detect(img):
             object_angle = int(math.degrees(math.atan2(
                 corners[0][1] - corners[1][1], corners[0][0] - corners[1][0])))  # rotation angle
             if id_smallest == 'None' or tag_id <= id_smallest:  # normal (123)
-            # if id_smallest == 'None' or tag_id >= id_smallest:  # reverse (321)
-            # if (id_smallest == 'None' or tag_id <= id_smallest or tag_id == 2) and id_smallest != 2:    # 2 first (213)
+                # if id_smallest == 'None' or tag_id >= id_smallest:  # reverse (321)
+                # if (id_smallest == 'None' or tag_id <= id_smallest or tag_id == 2) and id_smallest != 2:    # 2 first (213)
                 id_smallest = tag_id
                 msg.center_x = object_center_x
                 msg.center_y = object_center_y
@@ -163,13 +163,15 @@ def color_detect(img, color):
             # TODO: find the smallest incircle center x, center y, radius from area_max_contour
             # Hint: cv2.minEnclosingCircle
             (center_x, center_y), radius = cv2.minEnclosingCircle(area_max_contour)
-            center_x = int(center_x * img_w/size_m[0])
-            center_y = int(center_y * img_h/size_m[1])
-            radius = int(radius * img_w/size_m[0])
-            msg.center_x = center_x
-            msg.center_y = center_y
-            msg.angle = 0
-            msg.data = radius
+
+            msg.center_x = int(Misc.map(center_x, 0, size_m[0], 0, img_w))
+
+            msg.center_y = int(Misc.map(center_y, 0, size_m[1], 0, img_h))
+
+            msg.data = int(Misc.map(radius, 0, size_m[0], 0, img_w))
+
+            cv2.circle(img, (msg.center_x, msg.center_y),
+                       msg.data+5, range_rgb[color], 2)
 
             publish_en = True
 
