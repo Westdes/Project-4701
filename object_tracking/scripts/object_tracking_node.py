@@ -126,9 +126,9 @@ def run(msg):
                 # set the pid point position in the x direction
                 # update x pid
                 # update the robotic arm x
-                x_pid.SetPoint = img_w/2.0
-                x_pid.update(center_x)
-                arm_x += x_pid.output
+                    x_pid.SetPoint = img_w/2.0
+                    x_pid.update(center_x)
+                    arm_x += x_pid.output
 
                 # TODO:robot arm y axis tracking
                 if abs(center_y - img_h/2.0) < 15:
@@ -136,9 +136,9 @@ def run(msg):
                 # set the point position in the y direction
                 # update y pid
                 # update the robotic arm y
-                y_pid.SetPoint = img_h/2.0
-                y_pid.update(center_y)
-                arm_y += y_pid.output
+                    y_pid.SetPoint = img_h/2.0
+                    y_pid.update(center_y)
+                    arm_y += y_pid.output
 
                 # TODO:move the robotic arm
                 target = ik.setPitchRanges((0, 0.12, 0.08), -145, -180, 0)
@@ -153,9 +153,9 @@ def run(msg):
                 # set the point position in the x direction
                 # update x pid
                 # update the chassis x
-                arm_x_pid.SetPoint = Arm_X
-                arm_x_pid.update(arm_x)
-                x_velocity = arm_x_pid.output
+                    arm_x_pid.SetPoint = Arm_X
+                    arm_x_pid.update(arm_x)
+                    x_velocity = arm_x_pid.output
 
                 # TODO:chassis x axis tracking
                 if abs(arm_y - Arm_Y) < 5:
@@ -163,9 +163,9 @@ def run(msg):
                 # set the point position in the y direction
                 # update y pid
                 # update the chassis y
-                arm_y_pid.SetPoint = Arm_Y
-                arm_y_pid.update(arm_y)
-                y_velocity = arm_y_pid.output
+                    arm_y_pid.SetPoint = Arm_Y
+                    arm_y_pid.update(arm_y)
+                    y_velocity = arm_y_pid.output
 
                 # TODO:move the chassis
                 set_translation.publish(x_velocity, y_velocity)
