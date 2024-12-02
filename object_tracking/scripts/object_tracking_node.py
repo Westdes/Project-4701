@@ -126,8 +126,8 @@ def run(msg):
                 # set the pid point position in the x direction
                 # update x pid
                 # update the robotic arm x
-                x_pid.SetPoint = img_w/2.0
-                x_pid.update(center_x)
+                arm_x_pid.SetPoint = img_w/2.0  # set
+                arm_x_pid.update(center_x)      # current
                 arm_x += x_pid.output
                 arm_x = 200 if arm_x < 200 else arm_x
                 arm_x = 800 if arm_x > 800 else arm_x
@@ -138,15 +138,15 @@ def run(msg):
                 # set the point position in the y direction
                 # update y pid
                 # update the robotic arm y
-                y_pid.SetPoint = img_h/2.0
-                y_pid.update(center_y)
-                arm_y += y_pid.output
+                arm_y_pid.SetPoint = img_h/2.0  # set
+                arm_y_pid.update(center_y)      # current
+                arm_y += arm_y_pid.output       # output
                 arm_y = 50 if arm_y < 50 else arm_y
                 arm_y = 300 if arm_y > 300 else arm_y
 
                 # TODO:move the robotic arm
                 bus_servo_control.set_servos(
-                    joints_pub, 0.02, ((3, arm_y), (6, arm_x)))
+                    joints_pub, 20, ((3, arm_y), (6, arm_x)))
 
                 # TODO:chassis x axis tracking
                 if abs(arm_x - Arm_X) < 5:
@@ -154,11 +154,11 @@ def run(msg):
                 # set the point position in the x direction
                 # update x pid
                 # update the chassis x
-                arm_x_pid.SetPoint = Arm_X
-                arm_x_pid.update(arm_x)
-                x_velocity = arm_x_pid.output
-                x_velocity = -200 if x_velocity < -200 else x_velocity
-                x_velocity = 200 if x_velocity > 200 else x_velocity
+                x_pid.SetPoint = Arm_X       # set
+                x_pid.update(arm_x)          # current
+                dx = x_pid.output    # output
+                dx = -200 if dx < -200 else dx
+                dx = 200 if dx > 200 else dx
 
                 # TODO:chassis x axis tracking
                 if abs(arm_y - Arm_Y) < 5:
@@ -166,14 +166,14 @@ def run(msg):
                 # set the point position in the y direction
                 # update y pid
                 # update the chassis y
-                arm_y_pid.SetPoint = Arm_Y
-                arm_y_pid.update(arm_y)
-                y_velocity = -arm_y_pid.output
-                y_velocity = -180 if y_velocity < -180 else y_velocity
-                y_velocity = 180 if y_velocity > 180 else y_velocity
+                y_pid.SetPoint = Arm_Y   # set
+                y_pid.update(arm_y)      # current
+                dy = -y_pid.output    # output
+                dy = -180 if dy < -180 else dy
+                dy = 180 if dy > 180 else dy
 
                 # TODO:move the chassis
-                set_translation.publish(x_velocity, y_velocity)
+                set_translation.publish(dx, dy)
 
                 move = True
 
