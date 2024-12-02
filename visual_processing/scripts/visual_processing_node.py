@@ -56,7 +56,7 @@ def getAreaMaxContour(contours):
 detector = apriltag.Detector(searchpath=apriltag._get_demo_searchpath())
 
 
-def apriltag_Detect(img):
+def apriltag_Detect(img, type = 0):
     global pub_time
     global publish_en
     global id_smallest
@@ -81,12 +81,6 @@ def apriltag_Detect(img):
                 corners[i][1] = int(
                     Misc.map(corners[i][1], 0, size_m[1], 0, img_h))
 
-            cv2.drawContours(
-                img, [np.array(corners, np.int)], -1, (0, 255, 255), 2)
-            tag_family = str(detection.tag_family,
-                             encoding='utf-8')  # get tag_family
-            tag_id = int(detection.tag_id)        # get tag_id
-
             # TODO: get the center point (object_center_x, object_center_y, in image size)
             # Hint: use detection.center
 
@@ -100,13 +94,27 @@ def apriltag_Detect(img):
 
             cv2.putText(img, str(tag_id), (object_center_x - 10, object_center_y + 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, [0, 255, 255], 2)
-
-            if id_smallest == 'None' or tag_id <= id_smallest:
-                id_smallest = tag_id
-                msg.center_x = object_center_x
-                msg.center_y = object_center_y
-                msg.angle = object_angle
-                msg.data = id_smallest
+            if type == 1:
+                if id_smallest == 'None' or tag_id >= id_smallest:  # reverse (321)
+                    id_smallest = tag_id
+                    msg.center_x = object_center_x
+                    msg.center_y = object_center_y
+                    msg.angle = object_angle
+                    msg.data = id_smallest
+            elif type == 2:
+                if (id_smallest == 'None' or tag_id <= id_smallest or tag_id == 2) and id_smallest != 2:    # 2 first (213)
+                    id_smallest = tag_id
+                    msg.center_x = object_center_x
+                    msg.center_y = object_center_y
+                    msg.angle = object_angle
+                    msg.data = id_smallest
+            else:
+                if id_smallest == 'None' or tag_id <= id_smallest:  # normal (123)
+                    id_smallest = tag_id        
+                    msg.center_x = object_center_x
+                    msg.center_y = object_center_y
+                    msg.angle = object_angle
+                    msg.data = id_smallest
 
         id_smallest = 'None'
         publish_en = True
@@ -215,6 +223,10 @@ def image_callback(ros_image):
         if __isRunning:
             if target_type == 'apriltag':
                 frame_result = apriltag_Detect(cv2_img)
+            elif target_type == 'apriltag1':
+                frame_result = apriltag_Detect(cv2_img, 1)
+            elif target_type == 'apriltag2':
+                frame_result = apriltag_Detect(cv2_img, 2)
             elif target_type == 'color':
                 frame_result = color_detect(cv2_img, target_color)
 
