@@ -16,6 +16,7 @@ from sensor_msgs.msg import Image
 from sensor.msg import Led
 from visual_processing.msg import Result
 from visual_processing.srv import SetParam
+from object_tracking.srv import SetTarget
 from hiwonder_servo_msgs.msg import MultiRawIdPosDur
 from chassis_control.msg import SetTranslation, SetVelocity
 
@@ -44,6 +45,7 @@ object_center_x = 0
 object_center_y = 0
 x_pid = PID.PID(P=0.06, I=0, D=0)    # pid初始化
 y_pid = PID.PID(P=0.00003, I=0, D=0)
+pos = 0 # 0-4
 
 range_rgb = {
     'red':   (0, 0, 255),
@@ -51,6 +53,22 @@ range_rgb = {
     'green': (0, 255, 0),
     'black': (0, 0, 0),
     'white': (255, 255, 255),
+}
+
+pos_set_V = { # vertical
+    1: (0.20, 0.0, -0.09),
+    2: (0.19, 0.0, -0.06),
+    3: (0.18, 0.0, -0.03)
+}
+pos_set_H = { # horizontal
+    1: (0.27, 0.0, -0.09),
+    2: (0.23, 0.0, -0.09),
+    3: (0.20, 0.0, -0.09)
+}
+pos_set_L = { # L-shape
+    1: (0.23, 0.0, -0.09),
+    2: (0.19, 0.0, -0.09),
+    3: (0.19, 0.0, -0.06)
 }
 
 # 初始位置
@@ -105,6 +123,7 @@ def move():
     global steadier
     global object_id
     global x_dis, y_dis
+    global pos
     
     count_ = 0
     offset_y = 0
@@ -113,14 +132,12 @@ def move():
     ##
     start_en = True
     ## TODO 2: set block end positions
-    '''
-    place_coord = {1:(0.18, 0.0, -0.09),    # test
-                   2:(0.0, 0.0, -0.09),
-                   3:(0.0, -0.2, -0.09)}
-    '''
-    place_coord = {1:(0.18, 0.0, -0.09),    # vertical
-                   2:(0.18, 0.0, -0.06),
-                   3:(0.18, 0.0, -0.03)}
+    if pos == 0:    # low to high, horizontal
+        place_coord = pos_set_H
+    elif pos == 1:     # low to high, L-shape
+        place_coord = pos_set_L
+    else:    # other order, vertical
+        place_coord = pos_set_V
     ##
     while __isRunning:
         if steadier and object_center_x > 0 and object_center_y > 0: 
@@ -202,12 +219,10 @@ def move():
                     servo_data = target[1]
                     bus_servo_control.set_servos(joints_pub, 1500, ((6, servo_data['servo6']),)) # 机械臂先转过去
                     rospy.sleep(1.2)
-                    bus_servo_control.set_servos(joints_pub, 1600, ((3, servo_data['servo3']), (4, servo_data['servo4']), (5, servo_data['servo5']))) # 再放下了
+                    bus_servo_control.set_servos(joints_pub, 1600, ((2, 900),(3, servo_data['servo3']), (4, servo_data['servo4']), (5, servo_data['servo5']))) # 再放下了
                 rospy.sleep(1.8)
                 ## TODO 4: Move the robotic arm to where block is placed.
                 ## using ik.setPitchRanges(), place_coord, stack_num
-                bus_servo_control.set_servos(joints_pub, 500, ((2, 800),))
-                rospy.sleep(0.5)
                 (x,y,z) = place_coord[stack_num]
                 target = ik.setPitchRanges((x,y,z), -180, -180, 0)
                 ##
@@ -315,12 +330,18 @@ def exit_func(msg):
 def start_running():
     global lock
     global __isRunning
+    global pos
 
     rospy.loginfo("start running intelligent palletizer")
     with lock:
         __isRunning = True
         visual_running = rospy.ServiceProxy('/visual_processing/set_running', SetParam)
-        visual_running('apriltag','')
+        if pos == 3:
+            visual_running('apriltag1','')
+        elif pos == 4:
+            visual_running('apriltag2','')
+        else:
+            visual_running('apriltag','')
         rospy.sleep(0.1)
         # 运行子线程
         th = Thread(target=move)
@@ -341,10 +362,30 @@ def stop_running():
 
 # APP running服务回调函数
 def set_running(msg):
+    global pos
+    if msg.data == '3' or msg.data == 'true':
+        pos = 2
+        start_running()
+    elif msg.data == '1':
+        pos = 0
+        start_running()
+    elif msg.data == '2':
+        pos = 1
+        start_running()
+    elif msg.data == '4':
+        pos = 3
+        start_running()
+    elif msg.data == '5':
+        pos = 4
+        start_running()
+    else: 
+        stop_running()
+    '''
     if msg.data:
         start_running()
     else:
         stop_running()
+    '''
 
     return [True, 'set_running']
 
@@ -386,7 +427,7 @@ if __name__ == '__main__':
     # app通信服务
     enter_srv = rospy.Service('/intelligent_palletizer/enter', Trigger, enter_func)
     exit_srv = rospy.Service('/intelligent_palletizer/exit', Trigger, exit_func)
-    running_srv = rospy.Service('/intelligent_palletizer/set_running', SetBool, set_running)
+    running_srv = rospy.Service('/intelligent_palletizer/set_running', SetTarget, set_running)
     heartbeat_srv = rospy.Service('/intelligent_palletizer/heartbeat', SetBool, heartbeat_srv_cb)
     # 麦轮底盘控制
     set_velocity = rospy.Publisher('/chassis_control/set_velocity', SetVelocity, queue_size=1)
