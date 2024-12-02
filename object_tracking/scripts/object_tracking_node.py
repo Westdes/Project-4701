@@ -33,6 +33,8 @@ ik = ik_transform.ArmIK()
 move = False
 __isRunning = False
 target_color = 'None'
+target_type = 'None'
+
 
 img_w = 640
 img_h = 480
@@ -273,25 +275,38 @@ def set_running(msg):
 def set_target(msg):
     global lock
     global target_color
+    global target_type
 
     rospy.loginfo("%s", msg)
     with lock:
-        target_color = msg.data
-        led = Led()
-        led.index = 0
-        led.rgb.r = range_rgb[target_color][2]
-        led.rgb.g = range_rgb[target_color][1]
-        led.rgb.b = range_rgb[target_color][0]
-        rgb_pub.publish(led)
-        led.index = 1
-        rgb_pub.publish(led)
-        rospy.sleep(0.1)
-        visual_running = rospy.ServiceProxy(
-            '/visual_processing/set_running', SetParam)
-        visual_running('color', target_color)
-        rospy.sleep(0.1)
+        if msg.data == 'apriltag':
+            target_type = 'apriltag'  # Set target type to apriltag
+            target_color = 'None'
+            visual_running = rospy.ServiceProxy(
+                '/visual_processing/set_running', SetParam)
+            # Pass the apriltag type
+            visual_running(target_type, target_color)
 
-    return [True, 'set_target']
+            return [True, 'set_target']
+
+        else:
+            target_color = msg.data
+            target_type = 'color'  # Set target type to color
+            led = Led()
+            led.index = 0
+            led.rgb.r = range_rgb[target_color][2]
+            led.rgb.g = range_rgb[target_color][1]
+            led.rgb.b = range_rgb[target_color][0]
+            rgb_pub.publish(led)
+            led.index = 1
+            rgb_pub.publish(led)
+            rospy.sleep(0.1)
+            visual_running = rospy.ServiceProxy(
+                '/visual_processing/set_running', SetParam)
+            visual_running('color', target_color)
+            rospy.sleep(0.1)
+
+        return [True, 'set_target']
 
 # heartbeat service callback
 
