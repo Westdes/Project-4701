@@ -75,18 +75,33 @@ def apriltag_Detect(img):
             corners = np.rint(detection.corners)  # get four corners
 
             # TODO: map the four corners from the size_m to image size
-            corners = corners * (img_w/size_m[0], img_h/size_m[1])
+            for i in range(4):
+                corners[i][0] = int(
+                    Misc.map(corners[i][0], 0, size_m[0], 0, img_w))
+                corners[i][1] = int(
+                    Misc.map(corners[i][1], 0, size_m[1], 0, img_h))
+
+            cv2.drawContours(
+                img, [np.array(corners, np.int)], -1, (0, 255, 255), 2)
+            tag_family = str(detection.tag_family,
+                             encoding='utf-8')  # get tag_family
+            tag_id = int(detection.tag_id)        # get tag_id
 
             # TODO: get the center point (object_center_x, object_center_y, in image size)
             # Hint: use detection.center
-            object_center_x = int(detection.center[0] * img_w/size_m[0])
-            object_center_y = int(detection.center[1] * img_h/size_m[1])
+
+            object_center_x = int(
+                Misc.map(detection.center[0], 0, size_m[0], 0, img_w))
+            object_center_y = int(
+                Misc.map(detection.center[1], 0, size_m[1], 0, img_h))  # centre point
 
             object_angle = int(math.degrees(math.atan2(
                 corners[0][1] - corners[1][1], corners[0][0] - corners[1][0])))  # rotation angle
-            if id_smallest == 'None' or tag_id <= id_smallest:  # normal (123)
-                # if id_smallest == 'None' or tag_id >= id_smallest:  # reverse (321)
-                # if (id_smallest == 'None' or tag_id <= id_smallest or tag_id == 2) and id_smallest != 2:    # 2 first (213)
+
+            cv2.putText(img, str(tag_id), (object_center_x - 10, object_center_y + 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, [0, 255, 255], 2)
+
+            if id_smallest == 'None' or tag_id <= id_smallest:
                 id_smallest = tag_id
                 msg.center_x = object_center_x
                 msg.center_y = object_center_y
@@ -158,21 +173,17 @@ def color_detect(img, color):
         area_max_contour, area_max = getAreaMaxContour(
             contours)                                   # find the largest contours
 
-        if area_max > 100:  # find largest area
+        if area_max > 200:  # find largest area
 
             # TODO: find the smallest incircle center x, center y, radius from area_max_contour
             # Hint: cv2.minEnclosingCircle
-            (center_x, center_y), radius = cv2.minEnclosingCircle(area_max_contour)
-
-            msg.center_x = int(Misc.map(center_x, 0, size_m[0], 0, img_w))
-
-            msg.center_y = int(Misc.map(center_y, 0, size_m[1], 0, img_h))
-
+            (centerx, centery), radius = cv2.minEnclosingCircle(
+                area_max_contour)  # Get the smallest circumcircle
+            msg.center_x = int(Misc.map(centerx, 0, size_m[0], 0, img_w))
+            msg.center_y = int(Misc.map(centery, 0, size_m[1], 0, img_h))
             msg.data = int(Misc.map(radius, 0, size_m[0], 0, img_w))
-
             cv2.circle(img, (msg.center_x, msg.center_y),
                        msg.data+5, range_rgb[color], 2)
-
             publish_en = True
 
         if publish_en:
