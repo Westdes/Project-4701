@@ -128,7 +128,7 @@ def run(msg):
                 # update the robotic arm x
                 arm_x_pid.SetPoint = img_w/2.0  # set
                 arm_x_pid.update(center_x)      # current
-                arm_x += x_pid.output
+                arm_x += arm_x_pid.output       # output
                 arm_x = 200 if arm_x < 200 else arm_x
                 arm_x = 800 if arm_x > 800 else arm_x
 
